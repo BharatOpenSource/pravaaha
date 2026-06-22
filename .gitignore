@@ -1,0 +1,13 @@
+# Local planning — not for public repo
+docs/todo.md
+docs/BuildPlan.md
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# OS
+.DS_Store
+
+# Environment
+.env
+.env.*
