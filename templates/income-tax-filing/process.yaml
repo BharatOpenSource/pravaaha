@@ -1,0 +1,173 @@
+process:
+  id: income-tax-filing
+  name: Income Tax Return Filing (ITR)
+  version: "1.0.0"
+  owner:
+    id: pravaaha
+    name: pravaaha Reference Templates
+    vpa_tier: unverified
+  visibility: public
+  change_lock_days: 30
+
+  parties:
+    - id: taxpayer
+      role: Individual Taxpayer
+    - id: itd
+      role: Income Tax Department
+    - id: ca
+      role: Chartered Accountant
+      optional: true
+
+  rights:
+    - party: taxpayer
+      right: Right to revise return within 2 years of the end of relevant assessment year
+      authority:
+        law: Income Tax Act 1961
+        section: Section 139(5)
+    - party: taxpayer
+      right: Right to receive refund with interest if delayed beyond prescribed period
+      authority:
+        law: Income Tax Act 1961
+        section: Section 244A
+    - party: taxpayer
+      right: Right to be heard before any adverse order is passed
+      authority:
+        law: Income Tax Act 1961
+        section: Section 142(1)
+
+  steps:
+    - id: gather-documents
+      name: Gather Required Documents
+      actor: taxpayer
+      action: Taxpayer collects Form 16, bank statements, investment proofs, and other income documents
+      outputs: [form16, bank_statements, investment_proofs]
+      next: choose-itr-form
+      immutability: notice-required
+
+    - id: choose-itr-form
+      name: Select Applicable ITR Form
+      actor: taxpayer
+      action: Taxpayer selects correct ITR form based on income sources (ITR-1 through ITR-7)
+      inputs: [form16]
+      next: fill-itr-form
+      immutability: notice-required
+
+    - id: fill-itr-form
+      name: Fill ITR Form
+      actor: taxpayer
+      action: Taxpayer fills ITR form with income, deductions, tax paid, and TDS details
+      inputs: [form16, bank_statements, investment_proofs]
+      outputs: [draft_itr]
+      next: compute-tax
+      immutability: notice-required
+
+    - id: compute-tax
+      name: Compute Tax Liability or Refund
+      actor: taxpayer
+      action: System computes final tax liability or refund amount based on filled details
+      inputs: [draft_itr]
+      outputs: [tax_computation]
+      conditions:
+        - if: tax-due
+          next: pay-tax-due
+        - if: refund-due
+          next: submit-itr
+        - if: nil-liability
+          next: submit-itr
+      immutability: notice-required
+
+    - id: pay-tax-due
+      name: Pay Outstanding Tax
+      actor: taxpayer
+      action: Taxpayer pays remaining tax via Challan 280 before filing
+      outputs: [payment_challan]
+      next: submit-itr
+      immutability: notice-required
+
+    - id: submit-itr
+      name: Submit ITR on Income Tax Portal
+      actor: taxpayer
+      action: Taxpayer submits completed ITR form on incometax.gov.in
+      inputs: [draft_itr]
+      outputs: [itr_acknowledgement]
+      next: verify-itr
+      immutability: notice-required
+
+    - id: verify-itr
+      name: Verify ITR
+      actor: taxpayer
+      action: Taxpayer verifies ITR within 30 days via Aadhaar OTP, net banking, or physical signature
+      inputs: [itr_acknowledgement]
+      conditions:
+        - if: verified
+          next: itr-processed
+        - if: not-verified-within-30-days
+          next: itr-invalid
+      immutability: notice-required
+
+    - id: itr-invalid
+      name: ITR Deemed Invalid
+      actor: itd
+      action: ITR treated as not filed due to non-verification; taxpayer must file revised return
+      loop_back: fill-itr-form
+      immutability: notice-required
+
+    - id: itr-processed
+      name: ITR Under Processing
+      actor: itd
+      action: ITD processes the filed ITR, cross-verifies data with Form 26AS and AIS
+      inputs: [itr_acknowledgement]
+      conditions:
+        - if: processed-refund-due
+          next: refund-issued
+        - if: processed-no-demand
+          next: assessment-complete
+        - if: defective-notice
+          next: respond-to-defect
+        - if: scrutiny-selected
+          next: scrutiny-assessment
+      immutability: notice-required
+
+    - id: respond-to-defect
+      name: Respond to Defective Return Notice
+      actor: taxpayer
+      action: Taxpayer responds to defect notice under Section 139(9) within prescribed time
+      outputs: [defect_response]
+      loop_back: submit-itr
+      immutability: notice-required
+      rights_reference: taxpayer.right[2]
+
+    - id: scrutiny-assessment
+      name: Scrutiny Assessment
+      actor: itd
+      action: ITD conducts scrutiny assessment; taxpayer provides required information
+      outputs: [assessment_order]
+      conditions:
+        - if: assessment-closed
+          next: assessment-complete
+        - if: demand-raised
+          next: pay-demand-or-appeal
+      immutability: notice-required
+
+    - id: pay-demand-or-appeal
+      name: Pay Demand or File Appeal
+      actor: taxpayer
+      action: Taxpayer pays the assessed demand or files appeal before CIT(A)
+      loop_back: assessment-complete
+      immutability: notice-required
+      rights_reference: taxpayer.right[2]
+
+    - id: refund-issued
+      name: Refund Issued
+      actor: itd
+      action: Refund credited to taxpayer bank account with applicable interest
+      outputs: [refund_credit_advice]
+      terminal: true
+      immutability: notice-required
+
+    - id: assessment-complete
+      name: Assessment Complete
+      actor: itd
+      action: Assessment finalised with no outstanding demand or refund
+      terminal: true
+      immutability: notice-required

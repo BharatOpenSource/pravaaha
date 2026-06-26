@@ -1,0 +1,103 @@
+process:
+  id: company-registration/pvt-ltd
+  name: Private Limited Company Registration
+  version: "1.0.0"
+  owner:
+    id: pravaaha
+    name: pravaaha Reference Templates
+    vpa_tier: unverified
+  visibility: public
+  change_lock_days: 30
+
+  parties:
+    - id: promoter
+      role: Company Promoter / Director
+    - id: mca
+      role: Ministry of Corporate Affairs — Registrar of Companies
+    - id: ca
+      role: Chartered Accountant / Company Secretary
+      optional: true
+
+  rights:
+    - party: promoter
+      right: Right to receive written reason for rejection within 15 working days
+      authority:
+        law: Companies Act 2013
+        section: Section 7(2)
+    - party: promoter
+      right: Right to resubmit after rejection without additional fees within 30 days
+      authority:
+        law: Companies Act 2013
+        section: Section 7(4)
+    - party: promoter
+      right: Right to equal treatment in processing of application
+      authority:
+        law: Constitution of India
+        article: Article 14
+
+  references:
+    - id: verify-pan
+      source: gov-india/identity@pan-verification@v1.0
+      required: true
+    - id: verify-din
+      source: mca-india/din-services@din-allotment@v1.0
+      required: true
+
+  steps:
+    - id: reserve-name
+      name: Reserve Company Name
+      actor: promoter
+      action: Promoter submits up to 2 proposed names via RUN (Reserve Unique Name) service on MCA21
+      outputs: [name_approval_certificate]
+      next: verify-pan-all-directors
+      immutability: notice-required
+
+    - id: verify-pan-all-directors
+      name: Verify PAN of All Promoters and Directors
+      uses: verify-pan
+      next: allot-din
+      immutability: notice-required
+
+    - id: allot-din
+      name: Director Identification Number Allotment
+      uses: verify-din
+      next: draft-moa-aoa
+      immutability: notice-required
+
+    - id: draft-moa-aoa
+      name: Draft Memorandum and Articles of Association
+      actor: ca
+      action: Draft MOA and AOA as per Companies Act 2013 defining objects, liability, and share capital
+      inputs: [name_approval_certificate]
+      outputs: [moa_document, aoa_document]
+      next: submit-spice
+      immutability: notice-required
+
+    - id: submit-spice
+      name: Submit SPICe+ Integrated Form
+      actor: promoter
+      action: Submit SPICe+ form on MCA21 portal with all incorporation documents
+      inputs: [moa_document, aoa_document, name_approval_certificate]
+      conditions:
+        - if: approved
+          next: receive-certificate
+        - if: objections-raised
+          next: address-objections
+      immutability: notice-required
+
+    - id: address-objections
+      name: Address RoC Objections
+      actor: promoter
+      action: Promoter responds to Registrar of Companies objections with revised documents
+      outputs: [revised_submission]
+      loop_back: submit-spice
+      immutability: notice-required
+      rights_reference: promoter.right[1]
+
+    - id: receive-certificate
+      name: Receive Certificate of Incorporation
+      actor: mca
+      action: RoC issues digitally signed Certificate of Incorporation with Corporate Identification Number
+      outputs: [incorporation_certificate, cin_number]
+      terminal: true
+      immutability: notice-required

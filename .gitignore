@@ -2,6 +2,14 @@
 docs/todo.md
 docs/BuildPlan.md
 
+# CLI build output
+node_modules/
+dist/
+*.js.map
+
+# pravaaha local instance data (PIL, config)
+.pravaaha/
+
 # Claude Code local settings
 .claude/settings.local.json
 
