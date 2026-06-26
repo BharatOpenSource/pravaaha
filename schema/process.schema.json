@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BharatOpenSource/pravaaha/schema/process.schema.json",
+  "title": "pravaaha Process",
+  "description": "Schema for a pravaaha process definition (v0.1)",
+  "type": "object",
+  "required": ["process"],
+  "additionalProperties": false,
+  "properties": {
+    "process": {
+      "type": "object",
+      "required": ["id", "name", "version", "owner", "visibility", "parties", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9\\-/]*[a-z0-9]$",
+          "description": "Unique process identifier. Format: process-name or domain/process-name"
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Semantic version — major.minor.patch"
+        },
+        "owner": {
+          "type": "object",
+          "required": ["id", "name"],
+          "additionalProperties": false,
+          "properties": {
+            "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9\\-]*[a-z0-9]$" },
+            "name": { "type": "string", "minLength": 1 },
+            "vpa_tier": {
+              "type": "string",
+              "enum": ["unverified", "self-attested", "authority-verified", "authority"],
+              "default": "unverified"
+            }
+          }
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["public", "restricted", "private"]
+        },
+        "change_lock_days": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Minimum days before a proposed change goes live after publishing"
+        },
+        "parties": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "role"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9\\-_]*$" },
+              "role": { "type": "string", "minLength": 1 },
+              "optional": { "type": "boolean", "default": false }
+            }
+          }
+        },
+        "rights": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["party", "right", "authority"],
+            "additionalProperties": false,
+            "properties": {
+              "party": { "type": "string" },
+              "right": { "type": "string", "minLength": 1 },
+              "authority": {
+                "type": "object",
+                "required": ["law"],
+                "additionalProperties": false,
+                "properties": {
+                  "law": { "type": "string", "minLength": 1 },
+                  "section": { "type": "string" },
+                  "article": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "source"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9\\-_]*$" },
+              "source": {
+                "type": "string",
+                "description": "Format: org/repo@branch@version"
+              },
+              "required": { "type": "boolean", "default": true },
+              "hash": {
+                "type": "string",
+                "description": "SHA-256 content hash of the referenced process at declaration time"
+              }
+            }
+          }
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "name"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9\\-_]*$" },
+              "name": { "type": "string", "minLength": 1 },
+              "actor": { "type": "string" },
+              "action": { "type": "string" },
+              "inputs": { "type": "array", "items": { "type": "string" } },
+              "outputs": { "type": "array", "items": { "type": "string" } },
+              "next": { "type": "string" },
+              "conditions": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["if", "next"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "if": { "type": "string", "minLength": 1 },
+                    "next": { "type": "string" }
+                  }
+                }
+              },
+              "loop_back": { "type": "string" },
+              "uses": {
+                "type": "string",
+                "description": "Reference ID from the references block"
+              },
+              "terminal": { "type": "boolean" },
+              "immutability": {
+                "type": "string",
+                "enum": ["notice-required", "flexible"]
+              },
+              "rights_reference": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,73 @@
+process:
+  id: invoice-payment
+  name: Invoice Payment Process
+  version: "1.0.0"
+  owner:
+    id: pravaaha
+    name: pravaaha Reference Templates
+    vpa_tier: unverified
+  visibility: public
+  change_lock_days: 14
+
+  parties:
+    - id: vendor
+      role: Invoice Issuer
+    - id: buyer
+      role: Payment Authorizer
+
+  rights:
+    - party: vendor
+      right: Right to receive payment within 30 days of invoice approval
+      authority:
+        law: Micro, Small and Medium Enterprises Development Act 2006
+        section: Section 16
+    - party: buyer
+      right: Right to dispute any invoice within 7 days of receipt
+      authority:
+        law: Indian Contract Act 1872
+        section: Section 73
+
+  steps:
+    - id: create-invoice
+      name: Create and Send Invoice
+      actor: vendor
+      action: Vendor creates itemised invoice and sends to buyer with supporting documents
+      outputs: [invoice_document]
+      next: review-invoice
+      immutability: notice-required
+
+    - id: review-invoice
+      name: Review Invoice
+      actor: buyer
+      action: Buyer reviews invoice for accuracy against purchase order
+      inputs: [invoice_document]
+      conditions:
+        - if: approved
+          next: approve-payment
+        - if: disputed
+          next: dispute-invoice
+      immutability: notice-required
+
+    - id: dispute-invoice
+      name: File Dispute
+      actor: buyer
+      action: Buyer documents reason for dispute and sends written notice to vendor
+      outputs: [dispute_notice]
+      loop_back: create-invoice
+      immutability: notice-required
+      rights_reference: buyer.right[1]
+
+    - id: approve-payment
+      name: Authorise Payment
+      actor: buyer
+      action: Buyer authorises payment transfer to vendor account
+      next: payment-confirmed
+      immutability: notice-required
+
+    - id: payment-confirmed
+      name: Payment Confirmed
+      actor: buyer
+      action: Payment transferred and confirmation sent to vendor
+      outputs: [payment_confirmation]
+      terminal: true
+      immutability: notice-required
