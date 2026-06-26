@@ -23,8 +23,10 @@
 - [ ] Implement `pravaaha diff` — human-readable diff between versions
 - [ ] Implement `pravaaha propose-change` — notice period branch + PR
 
-**Blocked on:**
-- [ ] Privacy and security session (required before build starts — processes will handle sensitive data)
+**Security and governance — complete:**
+- [x] Full cybersecurity session: threat model, VPA tiers, multi-sig, PIL, quarantine/fallback, CLI distribution
+- [x] Governance model: three branches, automation-first, founder constraints
+- [x] GOVERNANCE.md written and committed
 
 **Pending (future):**
 - [ ] Commit current docs to GitHub repo

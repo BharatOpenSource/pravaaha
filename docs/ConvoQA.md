@@ -89,11 +89,47 @@
 - **Sutra**: the language pravaaha will use as its source format (v0.2+). YAML is the bridge.
 - **Pramana**: identity management system. pravaaha v0.1 uses lightweight GPG signing; Pramana replaces it in v0.2.
 
+### Security architecture — locked 2026-06-26
+
+**VPA tiers (4):** `unverified` | `self-attested` | `authority-verified` | `authority`
+- `authority` tier: root of trust, verified via existing Indian infrastructure (gov.in, GSTIN, MCA21, UIDAI) — minimum 2 independent authoritative sources
+- Cross-verification with existing trusted systems — pravaaha inherits trust, does not reinvent it
+
+**Multi-sig:** Minimum 2-of-2, recommended 2-of-3. Signers always appointed by higher authority, never self-appointed. Every publish: key + MFA (human-present second factor).
+
+**Process Integrity Ledger (PIL):** Append-only log, multiple independent operators, no single owner. Records every sealed version hash, VPA assignment, quarantine event, governance decision. Authoritative source of truth over Git repos.
+
+**Integrity checking:** All process references hash-locked at declaration time. Hash verified on every validation run. Mismatch → automatic quarantine → automatic fallback → escalate.
+
+**CLI distribution:** Signed binaries from GitHub releases only. No npm, no package registry.
+
+**Data model:** pravaaha never stores personal data. Orchestrator, not a store. Integration model (DigiLocker-style): authenticate → read from source, never copy to pravaaha. Erasure via redaction available as safety net.
+
+**Data residency:** Org's responsibility. pravaaha validates and prompts compliance — cannot technically enforce jurisdiction but will not stay silent.
+
+**Symmetric transparency:** Government using pravaaha is as auditable as anyone else. Transparency is both-ways — a structural defense, not just a feature.
+
+### Governance — locked 2026-06-26
+
+Full model in `GOVERNANCE.md`. Key decisions:
+
+- Three branches: Specification Council (legislative), Operations (executive), Dispute Panel (judicial)
+- No single entity controls more than one branch
+- Government = user, not governor. No governance role for government bodies.
+- **Automation first:** hash mismatch fires quarantine automatically at ALL tiers including `authority`. Logic is non-negotiable.
+- Authority-tier quarantine: auto-fires + auto-fallback, but recovery requires active multi-party participation, time-bound
+- GOVERNANCE.md ships with v0.1, evolves organically
+- Founder (Srikar Buddhiraju) explicitly limits own power in the document. No special overrides.
+- Transition to foundation/org: organic, when adoption warrants it
+- pravaaha's governance is itself a pravaaha process — versioned, auditable, governed by the same rules
+
 ## Open Questions
 
 - [ ] Licensing approach per project
-- [ ] Privacy and data security — full dedicated session required before v0.1 build starts
 - [ ] Aadhaar integration for Pramana (sensitive, separate session)
 - [ ] Registry design for v0.2 (indexing public repos, search by type/geography/owner)
-- [ ] notice period length standards — who sets minimums for public processes?
+- [ ] Notice period length standards — who sets minimums for public processes?
 - [ ] What does a human-readable diff look like for a non-technical citizen?
+- [ ] Key recovery mechanics for non-technical users (Pramana problem)
+- [ ] PIL operators — who are they, how are they selected, how is independence enforced?
+- [ ] Specification Council composition — how many members, how elected, initial bootstrap
