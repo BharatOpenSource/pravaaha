@@ -16,13 +16,16 @@
 - [x] 3 templates (invoice-payment, income-tax-filing, company-registration/pvt-ltd) — all validate clean
 - [x] Both PRs merged to main
 
-**v0.2 — next:**
-- [ ] Aadhaar/identity QA session (Pramana design)
-- [ ] Privacy and data security dedicated session
+**v0.2 — next (priority order based on smriti completion):**
+
+Smriti toolchain is now complete (264 tests, 17 files, on main). Three things directly unblocked:
+
+- [ ] **#1 Smriti as source format** — `pvh validate <file.smr>` and `pvh publish <file.smr>`: detect extension, pipe through `smr compile`, validate/publish compiled YAML. Highest value — moves pravaaha from hand-written YAML to a language with a toolchain.
+- [ ] **#2 Registry HTTP endpoint** — serve `.smr` files by `org/name@version`. Unblocks `smr fetch` HTTP seam in smriti (stub already exists at `cli/index.ts`). Starts the public registry.
+- [ ] **#3 `propose-change` command** — new branch + notice period + merge model. Pure pravaaha git mechanics, no smriti dep. Clean v0.2 deliverable now that schema is stable.
+
+Other v0.2 (not yet unblocked / separate concerns):
+- [ ] Aadhaar/Pramana design session
+- [ ] Privacy and data security session
 - [ ] GUI / visual process builder
 - [ ] Instance tracking
-- [ ] Public registry (index of public repos, searchable)
-- [ ] Pramana integration (replaces lightweight key signing)
-- [ ] Process reference resolution in CLI
-- [ ] propose-change command (notice period branch + PR)
-- [ ] Sutra language design (after v0.1 schema is proven in the field)
